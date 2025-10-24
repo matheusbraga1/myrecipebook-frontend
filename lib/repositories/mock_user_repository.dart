@@ -3,6 +3,7 @@ import '../services/storage_service.dart';
 
 class MockUserRepository {
   final StorageService _storageService;
+  String _currentPassword = '123456';
 
   MockUserRepository({
     required StorageService storageService,
@@ -28,5 +29,30 @@ class MockUserRepository {
     }
 
     await _storageService.saveUserInfo(name, email);
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    // Verifica se a senha atual está correta
+    if (currentPassword != _currentPassword) {
+      throw Exception('A senha que você digitou não coincide com a senha atual');
+    }
+
+    // Verifica se a nova senha é diferente da atual
+    if (newPassword == _currentPassword) {
+      throw Exception('A nova senha deve ser diferente da senha atual');
+    }
+
+    // Valida tamanho da nova senha
+    if (newPassword.length < 6) {
+      throw Exception('A senha deve ter mais de 6 caracteres');
+    }
+
+    // Atualiza a senha
+    _currentPassword = newPassword;
   }
 }

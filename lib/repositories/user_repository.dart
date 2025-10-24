@@ -32,4 +32,14 @@ class UserRepository {
 
     await _storageService.saveUserInfo(name, email);
   }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _apiClient.put('/user/change-password', {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+  }
 }

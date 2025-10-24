@@ -186,6 +186,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: const Text('Cancelar'),
                     ),
                   ],
+
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/change-password');
+                    },
+                    icon: const Icon(Icons.lock_outline),
+                    label: const Text('Alterar Senha'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
                   
                   const SizedBox(height: 32),
                   
