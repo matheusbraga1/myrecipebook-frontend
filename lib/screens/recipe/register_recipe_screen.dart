@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/recipe.dart';
 import '../../models/recipe_enums.dart';
 import '../../providers/recipe_provider.dart';
 import '../../widgets/custom_text_field.dart';
@@ -16,12 +17,10 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   
-  // Seleções
   CookingTime? _selectedCookingTime;
   Difficulty? _selectedDifficulty;
   final Set<DishType> _selectedDishTypes = {};
   
-  // Ingredientes e Instruções
   final List<TextEditingController> _ingredientControllers = [TextEditingController()];
   final List<TextEditingController> _instructionControllers = [TextEditingController()];
 
@@ -64,6 +63,80 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
         _instructionControllers[index].dispose();
         _instructionControllers.removeAt(index);
       });
+    }
+  }
+
+  Future<void> _handleSaveRecipe() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final ingredients = _ingredientControllers
+        .map((controller) => controller.text.trim())
+        .where((text) => text.isNotEmpty)
+        .toList();
+
+    if (ingredients.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Adicione pelo menos um ingrediente'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final instructions = <Instruction>[];
+    for (int i = 0; i < _instructionControllers.length; i++) {
+      final text = _instructionControllers[i].text.trim();
+      if (text.isNotEmpty) {
+        instructions.add(Instruction(
+          step: i + 1,
+          text: text,
+        ));
+      }
+    }
+
+    if (instructions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Adicione pelo menos uma instrução'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final request = RegisterRecipeRequest(
+      title: _titleController.text.trim(),
+      cookingTime: _selectedCookingTime,
+      difficulty: _selectedDifficulty,
+      ingredients: ingredients,
+      instructions: instructions,
+      dishTypes: _selectedDishTypes.toList(),
+    );
+
+    final recipeProvider = context.read<RecipeProvider>();
+    final success = await recipeProvider.registerRecipe(request);
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Receita salva com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(recipeProvider.errorMessage ?? 'Erro ao salvar receita'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -156,9 +229,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
                     return CustomButton(
                       text: 'Salvar Receita',
                       icon: Icons.save,
-                      onPressed: () {
-                        // TODO: Implementar na próxima parte
-                      },
+                      onPressed: _handleSaveRecipe,
                       isLoading: recipeProvider.isLoading,
                     );
                   },
@@ -395,7 +466,6 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
   }
 }
 
-// Widget reutilizável para tags selecionáveis
 class _SelectableTag extends StatelessWidget {
   final String label;
   final bool isSelected;

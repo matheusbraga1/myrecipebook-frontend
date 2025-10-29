@@ -1,4 +1,3 @@
-// Tempo de Cozimento
 enum CookingTime {
   lessThan10Minutes(0, 'Menos de 10 minutos'),
   between10And30Minutes(1, 'Entre 10 e 30 minutos'),
@@ -16,7 +15,6 @@ enum CookingTime {
   }
 }
 
-// Dificuldade
 enum Difficulty {
   low(0, 'Fácil'),
   medium(1, 'Médio'),
@@ -33,7 +31,6 @@ enum Difficulty {
   }
 }
 
-// Tipo de Prato
 enum DishType {
   breakfast(0, 'Café da Manhã'),
   lunch(1, 'Almoço'),

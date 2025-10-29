@@ -7,13 +7,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
-import 'providers/recipe_provider.dart'; // NOVO
+import 'providers/recipe_provider.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/user_repository.dart';
-import 'repositories/recipe_repository.dart'; // NOVO
+import 'repositories/recipe_repository.dart';
 import 'repositories/mock_auth_repository.dart';
 import 'repositories/mock_user_repository.dart';
-import 'repositories/mock_recipe_repository.dart'; // NOVO
+import 'repositories/mock_recipe_repository.dart';
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -21,7 +21,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
-import 'screens/recipe/register_recipe_screen.dart'; // NOVO
+import 'screens/recipe/register_recipe_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

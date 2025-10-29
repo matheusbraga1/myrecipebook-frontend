@@ -14,10 +14,4 @@ class RecipeRepository {
     final response = await _apiClient.post('/recipe', request.toJson());
     return RegisteredRecipe.fromJson(response);
   }
-
-  // Métodos futuros para listar, buscar, atualizar e deletar receitas
-  // Future<List<Recipe>> getRecipes() async { ... }
-  // Future<Recipe> getRecipeById(String id) async { ... }
-  // Future<void> updateRecipe(String id, RegisterRecipeRequest request) async { ... }
-  // Future<void> deleteRecipe(String id) async { ... }
 }

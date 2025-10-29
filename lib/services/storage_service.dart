@@ -15,7 +15,6 @@ class StorageService {
   })  : _secureStorage = secureStorage ?? const FlutterSecureStorage(),
         _prefs = prefs;
 
-  // Token methods (secure storage)
   Future<void> saveToken(String token) async {
     await _secureStorage.write(key: _tokenKey, value: token);
   }
@@ -28,7 +27,6 @@ class StorageService {
     await _secureStorage.delete(key: _tokenKey);
   }
 
-  // User info methods (shared preferences)
   Future<void> saveUserInfo(String name, String email) async {
     await _prefs.setString(_userNameKey, name);
     await _prefs.setString(_userEmailKey, email);

@@ -6,7 +6,7 @@ class RecipeProvider with ChangeNotifier {
   
   bool _isLoading = false;
   String? _errorMessage;
-  List<RegisteredRecipe> _recipes = [];
+  final List<RegisteredRecipe> _recipes = [];
   RegisteredRecipe? _lastRegisteredRecipe;
 
   RecipeProvider({required dynamic recipeRepository})
@@ -25,7 +25,6 @@ class RecipeProvider with ChangeNotifier {
 
       _lastRegisteredRecipe = await _recipeRepository.registerRecipe(request);
       
-      // Adiciona a receita na lista local
       _recipes.add(_lastRegisteredRecipe!);
       
       _isLoading = false;
@@ -45,9 +44,6 @@ class RecipeProvider with ChangeNotifier {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
-
-      // TODO: Implementar quando tiver endpoint de listagem
-      // _recipes = await _recipeRepository.getRecipes();
       
       _isLoading = false;
       notifyListeners();
