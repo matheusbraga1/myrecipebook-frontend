@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/strings.dart';
 import '../../models/recipe.dart';
 import '../../models/recipe_enums.dart';
 import '../../providers/recipe_provider.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/selectable_tag.dart';
 
 class RegisterRecipeScreen extends StatefulWidget {
   const RegisterRecipeScreen({super.key});
@@ -15,17 +17,19 @@ class RegisterRecipeScreen extends StatefulWidget {
 
 class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
   final _titleController = TextEditingController();
-  
+
   CookingTime? _selectedCookingTime;
   Difficulty? _selectedDifficulty;
   final Set<DishType> _selectedDishTypes = {};
-  
+
   final List<TextEditingController> _ingredientControllers = [TextEditingController()];
   final List<TextEditingController> _instructionControllers = [TextEditingController()];
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _titleController.dispose();
     for (var controller in _ingredientControllers) {
       controller.dispose();
@@ -36,38 +40,169 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
     super.dispose();
   }
 
+  bool _hasUnsavedData() {
+    return _titleController.text.isNotEmpty ||
+        _selectedCookingTime != null ||
+        _selectedDifficulty != null ||
+        _selectedDishTypes.isNotEmpty ||
+        _ingredientControllers.any((c) => c.text.isNotEmpty) ||
+        _instructionControllers.any((c) => c.text.isNotEmpty);
+  }
+
+  Future<bool> _showExitConfirmation() async {
+    if (!_hasUnsavedData()) {
+      return true;
+    }
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(Strings.discardChangesTitle),
+        content: const Text(Strings.discardChangesMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(Strings.cancelButton),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text(Strings.exitButton),
+          ),
+        ],
+      ),
+    );
+
+    return shouldExit ?? false;
+  }
+
   void _addIngredient() {
     setState(() {
       _ingredientControllers.add(TextEditingController());
     });
+
+    // Scroll para o final após adicionar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
-  void _removeIngredient(int index) {
-    if (_ingredientControllers.length > 1) {
-      setState(() {
-        _ingredientControllers[index].dispose();
-        _ingredientControllers.removeAt(index);
-      });
+  Future<void> _removeIngredient(int index) async {
+    if (_ingredientControllers.length <= 1) return;
+
+    if (_ingredientControllers[index].text.isNotEmpty) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(Strings.removeIngredientTitle),
+          content: const Text(Strings.removeIngredientMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(Strings.cancelButton),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text(Strings.removeButton),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
     }
+
+    setState(() {
+      _ingredientControllers[index].dispose();
+      _ingredientControllers.removeAt(index);
+    });
   }
 
   void _addInstruction() {
     setState(() {
       _instructionControllers.add(TextEditingController());
     });
+
+    // Scroll para o final após adicionar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
-  void _removeInstruction(int index) {
-    if (_instructionControllers.length > 1) {
-      setState(() {
-        _instructionControllers[index].dispose();
-        _instructionControllers.removeAt(index);
-      });
+  Future<void> _removeInstruction(int index) async {
+    if (_instructionControllers.length <= 1) return;
+
+    if (_instructionControllers[index].text.isNotEmpty) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(Strings.removeStepTitle),
+          content: const Text(Strings.removeStepMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text(Strings.cancelButton),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text(Strings.removeButton),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
     }
+
+    setState(() {
+      _instructionControllers[index].dispose();
+      _instructionControllers.removeAt(index);
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   Future<void> _handleSaveRecipe() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Validação de tempo de preparo
+    if (_selectedCookingTime == null) {
+      _showError(Strings.cookingTimeRequiredError);
+      return;
+    }
+
+    // Validação de dificuldade
+    if (_selectedDifficulty == null) {
+      _showError(Strings.difficultyRequiredError);
+      return;
+    }
+
+    // Validação de tipo de prato
+    if (_selectedDishTypes.isEmpty) {
+      _showError(Strings.dishTypeRequiredError);
       return;
     }
 
@@ -77,12 +212,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
         .toList();
 
     if (ingredients.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Adicione pelo menos um ingrediente'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showError(Strings.ingredientRequiredError);
       return;
     }
 
@@ -98,12 +228,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
     }
 
     if (instructions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Adicione pelo menos uma instrução'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showError(Strings.instructionRequiredError);
       return;
     }
 
@@ -123,118 +248,125 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Receita salva com sucesso!'),
+            content: Text(Strings.recipeSavedSuccess),
             backgroundColor: Colors.green,
           ),
         );
 
         Navigator.of(context).pop();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(recipeProvider.errorMessage ?? 'Erro ao salvar receita'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showError(recipeProvider.errorMessage ?? Strings.recipeSaveError);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nova Receita'),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Título
-                CustomTextField(
-                  controller: _titleController,
-                  label: 'Título da Receita',
-                  hint: 'Ex: Bolo de Chocolate',
-                  prefixIcon: Icons.restaurant_menu,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'O título não pode estar vazio';
-                    }
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Tempo de Preparo
-                Text(
-                  'Tempo de Preparo',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        final shouldExit = await _showExitConfirmation();
+        if (shouldExit && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(Strings.newRecipeTitle),
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Título
+                  CustomTextField(
+                    controller: _titleController,
+                    label: '${Strings.recipeTitleLabel} *',
+                    hint: Strings.recipeTitleHint,
+                    prefixIcon: Icons.restaurant_menu,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return Strings.titleEmptyError;
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildCookingTimeTags(),
-                
-                const SizedBox(height: 24),
-                
-                // Dificuldade
-                Text(
-                  'Dificuldade',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+
+                  const SizedBox(height: 24),
+
+                  // Tempo de Preparo
+                  Text(
+                    '${Strings.cookingTimeLabel} *',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildDifficultyTags(),
-                
-                const SizedBox(height: 24),
-                
-                // Tipo de Prato
-                Text(
-                  'Tipo de Prato',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 12),
+                  _buildCookingTimeTags(),
+
+                  const SizedBox(height: 24),
+
+                  // Dificuldade
+                  Text(
+                    '${Strings.difficultyLabel} *',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Selecione um ou mais tipos',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+                  const SizedBox(height: 12),
+                  _buildDifficultyTags(),
+
+                  const SizedBox(height: 24),
+
+                  // Tipo de Prato
+                  Text(
+                    '${Strings.dishTypeLabel} *',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildDishTypeTags(),
-                
-                const SizedBox(height: 24),
-                
-                // Ingredientes
-                _buildIngredientsSection(),
-                
-                const SizedBox(height: 24),
-                
-                // Modo de Preparo
-                _buildInstructionsSection(),
-                
-                const SizedBox(height: 32),
-                
-                // Botão de Salvar
-                Consumer<RecipeProvider>(
-                  builder: (context, recipeProvider, _) {
-                    return CustomButton(
-                      text: 'Salvar Receita',
-                      icon: Icons.save,
-                      onPressed: _handleSaveRecipe,
-                      isLoading: recipeProvider.isLoading,
-                    );
-                  },
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    Strings.dishTypeSubtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDishTypeTags(),
+
+                  const SizedBox(height: 24),
+
+                  // Ingredientes
+                  _buildIngredientsSection(),
+
+                  const SizedBox(height: 24),
+
+                  // Modo de Preparo
+                  _buildInstructionsSection(),
+
+                  const SizedBox(height: 32),
+
+                  // Botão de Salvar
+                  Consumer<RecipeProvider>(
+                    builder: (context, recipeProvider, _) {
+                      return CustomButton(
+                        text: Strings.saveRecipeButton,
+                        icon: Icons.save,
+                        onPressed: _handleSaveRecipe,
+                        isLoading: recipeProvider.isLoading,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -248,7 +380,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
       runSpacing: 8,
       children: CookingTime.values.map((time) {
         final isSelected = _selectedCookingTime == time;
-        return _SelectableTag(
+        return SelectableTag(
           label: time.label,
           isSelected: isSelected,
           onTap: () {
@@ -267,7 +399,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
       runSpacing: 8,
       children: Difficulty.values.map((difficulty) {
         final isSelected = _selectedDifficulty == difficulty;
-        return _SelectableTag(
+        return SelectableTag(
           label: difficulty.label,
           isSelected: isSelected,
           icon: _getDifficultyIcon(difficulty),
@@ -287,7 +419,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
       runSpacing: 8,
       children: DishType.values.map((type) {
         final isSelected = _selectedDishTypes.contains(type);
-        return _SelectableTag(
+        return SelectableTag(
           label: type.label,
           isSelected: isSelected,
           icon: _getDishTypeIcon(type),
@@ -313,7 +445,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Ingredientes',
+              '${Strings.ingredientsLabel} *',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -321,7 +453,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
             TextButton.icon(
               onPressed: _addIngredient,
               icon: const Icon(Icons.add, size: 20),
-              label: const Text('Adicionar'),
+              label: const Text(Strings.addButton),
             ),
           ],
         ),
@@ -337,8 +469,8 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
                 Expanded(
                   child: CustomTextField(
                     controller: _ingredientControllers[index],
-                    label: 'Ingrediente ${index + 1}',
-                    hint: 'Ex: 2 xícaras de farinha',
+                    label: '${Strings.ingredientLabel} ${index + 1}',
+                    hint: Strings.ingredientHint,
                     prefixIcon: Icons.shopping_basket,
                   ),
                 ),
@@ -366,7 +498,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Modo de Preparo',
+              '${Strings.instructionsLabel} *',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -374,7 +506,7 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
             TextButton.icon(
               onPressed: _addInstruction,
               icon: const Icon(Icons.add, size: 20),
-              label: const Text('Adicionar'),
+              label: const Text(Strings.addButton),
             ),
           ],
         ),
@@ -410,8 +542,8 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
                 Expanded(
                   child: CustomTextField(
                     controller: _instructionControllers[index],
-                    label: 'Passo ${index + 1}',
-                    hint: 'Descreva o passo',
+                    label: '${Strings.stepLabel} ${index + 1}',
+                    hint: Strings.stepHint,
                     maxLines: 3,
                     prefixIcon: Icons.format_list_numbered,
                   ),
@@ -463,63 +595,5 @@ class _RegisterRecipeScreenState extends State<RegisterRecipeScreen> {
       case DishType.drinks:
         return Icons.local_drink;
     }
-  }
-}
-
-class _SelectableTag extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final IconData? icon;
-
-  const _SelectableTag({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).primaryColor
-              : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).primaryColor
-                : Colors.grey[300]!,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? Colors.white : Colors.grey[700],
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[800],
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
