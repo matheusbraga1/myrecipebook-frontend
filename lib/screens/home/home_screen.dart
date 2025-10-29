@@ -199,9 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Funcionalidade em desenvolvimento')),
-          );
+          Navigator.of(context).pushNamed('/register-recipe');
         },
         icon: const Icon(Icons.add),
         label: const Text('Nova Receita'),
