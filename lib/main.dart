@@ -7,10 +7,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'config/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/recipe_provider.dart'; // NOVO
 import 'repositories/auth_repository.dart';
 import 'repositories/user_repository.dart';
+import 'repositories/recipe_repository.dart'; // NOVO
 import 'repositories/mock_auth_repository.dart';
 import 'repositories/mock_user_repository.dart';
+import 'repositories/mock_recipe_repository.dart'; // NOVO
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 import 'screens/auth/login_screen.dart';
@@ -18,6 +21,7 @@ import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
+import 'screens/recipe/register_recipe_screen.dart'; // NOVO
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,10 +48,12 @@ class MyRecipeBookApp extends StatelessWidget {
     
     late final dynamic authRepository;
     late final dynamic userRepository;
+    late final dynamic recipeRepository; // NOVO
     
     if (AppConfig.useMockData) {
       authRepository = MockAuthRepository(storageService: storageService);
       userRepository = MockUserRepository(storageService: storageService);
+      recipeRepository = MockRecipeRepository(storageService: storageService); // NOVO
     } else {
       final apiClient = ApiClient();
       authRepository = AuthRepository(
@@ -55,6 +61,10 @@ class MyRecipeBookApp extends StatelessWidget {
         storageService: storageService,
       );
       userRepository = UserRepository(
+        apiClient: apiClient,
+        storageService: storageService,
+      );
+      recipeRepository = RecipeRepository( // NOVO
         apiClient: apiClient,
         storageService: storageService,
       );
@@ -68,6 +78,9 @@ class MyRecipeBookApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => UserProvider(userRepository: userRepository),
+        ),
+        ChangeNotifierProvider( // NOVO
+          create: (_) => RecipeProvider(recipeRepository: recipeRepository),
         ),
       ],
       child: Consumer<AuthProvider>(
@@ -113,7 +126,8 @@ class MyRecipeBookApp extends StatelessWidget {
               '/register': (context) => const RegisterScreen(),
               '/home': (context) => const HomeScreen(),
               '/profile': (context) => const ProfileScreen(),
-              '/change-password': (context) => const ChangePasswordScreen()
+              '/change-password': (context) => const ChangePasswordScreen(),
+              '/register-recipe': (context) => const RegisterRecipeScreen(), // NOVO
             },
           );
         },
