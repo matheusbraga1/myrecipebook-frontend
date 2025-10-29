@@ -1,5 +1,5 @@
 class AppConfig {
-  static const bool useMockData = false; // true = Mock | false = API Real
+  static const bool useMockData = true; // true = Mock | false = API Real
   
   static const String apiBaseUrl = 'http://10.0.2.2:5016'; // Android Emulator
   
