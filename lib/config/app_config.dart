@@ -1,11 +1,7 @@
 class AppConfig {
-  // ALTERE AQUI PARA MUDAR O MODO
-  static const bool useMockData = true; // true = Mock | false = API Real
+  static const bool useMockData = false; // true = Mock | false = API Real
   
-  // URL da API (usado apenas quando useMockData = false)
-  static const String apiBaseUrl = 'http://localhost:5016'; // Android Emulator
-  // static const String apiBaseUrl = 'http://localhost:5016'; // iOS Simulator
-  // static const String apiBaseUrl = 'http://192.168.1.100:5016'; // Dispositivo físico
+  static const String apiBaseUrl = 'http://10.0.2.2:5016'; // Android Emulator
   
   static const int httpTimeoutSeconds = 30;
   static const String appName = 'Meu Livro de Receitas';
