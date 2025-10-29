@@ -110,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 60,
-                          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                          backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                           child: Icon(
                             Icons.person,
                             size: 60,
@@ -187,16 +187,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
 
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/change-password');
-                    },
-                    icon: const Icon(Icons.lock_outline),
-                    label: const Text('Alterar Senha'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                  if (!_isEditing) ...[
+                    CustomButton(
+                      text: 'Alterar Senha',
+                      icon: Icons.lock_outline,
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/change-password');
+                      },
                     ),
-                  ),
+                  ],
                   
                   const SizedBox(height: 32),
                   
