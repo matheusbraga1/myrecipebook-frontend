@@ -1,6 +1,6 @@
 class AppConfig {
   // ALTERE AQUI PARA MUDAR O MODO
-  static const bool useMockData = false; // true = Mock | false = API Real
+  static const bool useMockData = true; // true = Mock | false = API Real
   
   // URL da API (usado apenas quando useMockData = false)
   static const String apiBaseUrl = 'http://localhost:5016'; // Android Emulator
